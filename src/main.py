@@ -11,7 +11,18 @@ Base.metadata.create_all(bind=dbEngine) #criando o banco xd kk rs tetrick vai se
 async def persistencia():
     while True:
         with sessaoLocal() as sessao:
-            print(sessao.query(Queue).count())
+            args = select(Queue,Player).join(Player, Player.id == Queue.player_id).order_by(Queue.joinedAt)
+            resultados = sessao.execute(args).all()
+            if len(resultados) >= 2:
+                q1,p1 = resultados[0]
+                q2,p2 = resultados[1]
+                if abs(p1.elo - p2.elo) <= 100:
+                    novaPartida = Match(player1_id=p1.id,player2_id=p2.id,matchStatus="Em Andamento...")
+                    sessao.add(novaPartida)
+                    sessao.delete(q1)
+                    sessao.delete(q2)
+                    sessao.commit()
+                    print(f"GAME FOUND!!! {p1.user}, {p1.elo} ELO X {p2.user}, {p2.elo} ELO")
         await asyncio.sleep(10)
 
 @asynccontextmanager

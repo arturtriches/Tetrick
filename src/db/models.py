@@ -20,3 +20,12 @@ class Queue(Base):
     player_id : Mapped[int] = mapped_column(ForeignKey("Player.id"))
     joinedAt : Mapped[DateTime] = mapped_column(DateTime, default=func.now())
     
+class Match(Base):
+    __tablename__ = "Match"
+    
+    id : Mapped[int] = mapped_column(primary_key=True, autoincrement= True)
+    player1_id : Mapped[int] = mapped_column(ForeignKey("Player.id"))
+    player2_id : Mapped[int] = mapped_column(ForeignKey("Player.id"))
+    createdAt : Mapped[DateTime] = mapped_column(DateTime, default=func.now())
+    matchStatus : Mapped[str] = mapped_column("status")
+    
