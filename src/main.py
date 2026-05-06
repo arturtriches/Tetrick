@@ -5,6 +5,8 @@ from .schemas.player import *
 from .schemas.queue import *
 from .db.database import *
 from .db.models import *
+from .core.security import *
+from .api.routers import getCurrentUser
 
 Base.metadata.create_all(bind=dbEngine) #criando o banco xd kk rs tetrick vai ser hype dimaizi
 
@@ -45,7 +47,8 @@ def sessionHandler(obj, ses):
 @app.post("/createUser")
 async def createUser(player : playerCreate):
     sessao = sessaoLocal()
-    newPlayer = Player(user=player.user, hash_password="placeholder")
+    senha = hashOut(player.password)
+    newPlayer = Player(user=player.user, hash_password= senha)
     sessionHandler(newPlayer,sessao)
     return newPlayer
 
@@ -56,13 +59,13 @@ async def showUser(player_id : int):
     return jogador
 
 @app.post("/queueUp", response_model=queueResponse)
-async def queueUp(data : queueCreate):
+async def queueUp(data : queueCreate = Depends(getCurrentUser)):
     sessao = sessaoLocal()
     jogador = sessao.get(Player,data.player_id)
     if not jogador:
         raise HTTPException(status_code=404, detail="nem tem player com esse nick")
-    if sessao.scalars(select(Queue).filter_by(player_id=data.player_id)).first():
-        raise HTTPException(status_code=400, detail="vai entrar na fila dnv paizao?")
+    if sessao.select(Queue).filter_by(player_id=data.player_id).first():
+        raise HTTPException(status_code=409, detail="vai entrar na fila dnv paizao?")
     queuePlace = Queue(player_id=data.player_id)
     sessionHandler(queuePlace,sessao)
     return queuePlace
